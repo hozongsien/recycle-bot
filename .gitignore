@@ -1,0 +1,8 @@
+env/
+
+src/.next/
+node_modules/
+
+training/model/
+training/data/
+
