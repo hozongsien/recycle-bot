@@ -1,6 +1,6 @@
 env/
 
-src/.next/
+.next/
 node_modules/
 
 training/model/
