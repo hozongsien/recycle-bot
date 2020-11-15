@@ -8,7 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
-    "@tensorflow/tfjs-node": "^2.7.0",
+    "@tensorflow/tfjs": "^2.7.0",
     "next": "^10.0.0",
     "react": "16.13.1",
     "react-dom": "16.13.1"
