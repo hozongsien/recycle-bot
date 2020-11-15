@@ -1,10 +1,11 @@
 {
-  "name": "learn-starter",
+  "name": "recycle-bot",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "export": "next export",
     "start": "next start"
   },
   "dependencies": {
