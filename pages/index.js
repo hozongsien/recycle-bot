@@ -8,6 +8,7 @@ export default function Home() {
   const VIDEO_HEIGHT_PIXELS = 512;
   const VIDEO_WIDTH_PIXELS = 384;
   const videoRef = useRef();
+  const [mod, setMod] = useState();
   const [prediction, setPrediction] = useState();
   const CLASSES = {
     0: "cardboard",
@@ -19,23 +20,25 @@ export default function Home() {
   };
   const base_url = process.env.BASE_URL;
   let requestAnimationFrameId = 0;
-  
+
   const getTopKClasses = (predictions, topK) => {
     const values = predictions.dataSync();
     predictions.dispose();
 
     let predictionList = [];
     for (let i = 0; i < values.length; i++) {
-      predictionList.push({value: values[i], index: i});
+      predictionList.push({ value: values[i], index: i });
     }
-    predictionList = predictionList.sort((a, b) => {
-      return b.value - a.value;
-    }).slice(0, topK);
+    predictionList = predictionList
+      .sort((a, b) => {
+        return b.value - a.value;
+      })
+      .slice(0, topK);
 
-    return predictionList.map(x => {
-      return {label: CLASSES[x.index], value: x.value};
+    return predictionList.map((x) => {
+      return { label: CLASSES[x.index], value: x.value };
     });
-  }
+  };
 
   const predict = async (model, videoRef) => {
     const result = tf.tidy(() => {
@@ -54,7 +57,7 @@ export default function Home() {
       return model.execute(PixelsCrpExpSc);
     });
 
-    const topK = getTopKClasses(result, 1)
+    const topK = getTopKClasses(result, 1);
     setPrediction(topK[0].label);
     requestAnimationFrameId = requestAnimationFrame(() =>
       predict(model, videoRef)
@@ -74,6 +77,7 @@ export default function Home() {
     await startVdieo(videoRef);
     const model = await setupModel();
     await warmUpModel(model);
+    setMod(model);
 
     await predict(model, videoRef);
   };
@@ -98,8 +102,9 @@ export default function Home() {
         <h1 className="title">Recycle Bot</h1>
         <p className="description">Classify waste.</p>
         <img src={`${base_url}/images/tfjs.png`} alt="tfjs" width={200} />
+        <p>{mod ? "model loaded" : "model not loaded"}</p>
         <p className="description">
-          {prediction ? prediction : "loading model"}
+          {prediction ? prediction : "making prediction"}
         </p>
         <div className="frame">
           <video className="video" playsInline muted ref={videoRef} />
