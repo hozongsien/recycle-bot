@@ -5,7 +5,7 @@ async function setupModel() {
     // local: "http://localhost:8000/src/model/model.json"
     // live host:
 
-  const model_url = "model/model.json";
+  const model_url = "../model/model.json";
   return tf.loadGraphModel(model_url);
 }
 
