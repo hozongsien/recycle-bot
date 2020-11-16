@@ -1,5 +1,6 @@
 import * as tf from "@tensorflow/tfjs";
 import Head from "next/head";
+import Image from "next/image";
 import React, { useRef, useState, useEffect, useContext } from "react";
 import setupCamera from "../components/setupCamera";
 import setupModel from "../components/setupModel";
@@ -75,6 +76,12 @@ export default function Home() {
         <h1 className="title">Recycle Bot</h1>
         <p className="description">Classify waste.</p>
         <p className="description">{prediction}</p>
+        <img 
+          src='/images/tfjs.png'
+          alt='tfjs'
+          width={300}
+          height={300}
+        />
         <div className="frame">
           <video className="video" autoPlay playsInline muted ref={videoRef} />
         </div>
