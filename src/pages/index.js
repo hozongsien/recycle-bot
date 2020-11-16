@@ -1,8 +1,68 @@
-import Head from "next/head";
 import * as tf from "@tensorflow/tfjs";
+import Head from "next/head";
+import React, { useRef, useState, useEffect, useContext } from "react";
+import setupCamera from "../components/setupCamera";
+import setupModel from "../components/setupModel";
 
 export default function Home() {
-  loadModel();
+  const VIDEO_HEIGHT_PIXELS = 512;
+  const VIDEO_WIDTH_PIXELS = 384;
+  const videoRef = useRef();
+  const [prediction, setPrediction] = useState();
+  const CLASSES = {
+    0: "cardboard",
+    1: "glass",
+    2: "metal",
+    3: "paper",
+    4: "plastic",
+    5: "trash",
+  };
+  let requestAnimationFrameId = 0;
+
+  const predict = async (model, video) => {
+    const result = tf.tidy(() => {
+      const pixels = tf.browser.fromPixels(video);
+      const centerHeight = pixels.shape[0] / 2;
+      const beginHeight = centerHeight - VIDEO_HEIGHT_PIXELS / 2;
+      const centerWidth = pixels.shape[1] / 2;
+      const beginWidth = centerWidth - VIDEO_WIDTH_PIXELS / 2;
+      const pixelsCropped = pixels.slice(
+        [beginHeight, beginWidth, 0],
+        [VIDEO_HEIGHT_PIXELS, VIDEO_WIDTH_PIXELS, 3]
+      );
+
+      const pixelsCrpExp = pixelsCropped.expandDims(0);
+      const PixelsCrpExpSc = tf.cast(pixelsCrpExp, "float32");
+      return model.execute(PixelsCrpExpSc);
+    });
+
+    const probs = result.dataSync();
+    const label = tf.argMax(probs).dataSync();
+    setPrediction(CLASSES[label])
+    result.dispose()
+    requestAnimationFrameId = requestAnimationFrame(() => predict(model, video));
+  };
+  const warmUpModel = async (model) => {
+    model.predict(tf.zeros([1, VIDEO_HEIGHT_PIXELS, VIDEO_WIDTH_PIXELS, 3]))
+  }
+
+  const enablePrediction = async () => {
+    await tf.ready();
+    const model = await setupModel()
+    await warmUpModel(model)
+    const video = await setupCamera(videoRef)
+    await predict(model, video)
+  };
+
+  useEffect(() => {
+    console.log('mount')
+    enablePrediction();
+
+    return () => {
+      console.log("unmount");
+    };
+  }, []);
+
 
   return (
     <div className="container">
@@ -13,7 +73,11 @@ export default function Home() {
 
       <main>
         <h1 className="title">Recycle Bot</h1>
-        <p className="description">Classifies images.</p>
+        <p className="description">Classify waste.</p>
+        <p className="description">{prediction}</p>
+        <div className="frame">
+          <video className="video" autoPlay playsInline muted ref={videoRef} />
+        </div>
       </main>
 
       <footer>
@@ -28,6 +92,9 @@ export default function Home() {
           flex-direction: column;
           justify-content: center;
           align-items: center;
+        }
+        .frame {
+          border: solid;
         }
 
         main {
@@ -124,10 +191,4 @@ export default function Home() {
       `}</style>
     </div>
   );
-}
-
-async function loadModel() {
-  // const model_url = "model/model.json";
-  // const model = await tf.loadGraphModel(model_url);
-  console.log("Model loaded");
 }
