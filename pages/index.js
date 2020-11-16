@@ -19,10 +19,27 @@ export default function Home() {
   };
   const base_url = process.env.BASE_URL;
   let requestAnimationFrameId = 0;
+  
+  const getTopKClasses = (predictions, topK) => {
+    const values = predictions.dataSync();
+    predictions.dispose();
 
-  const predict = async (model, video) => {
+    let predictionList = [];
+    for (let i = 0; i < values.length; i++) {
+      predictionList.push({value: values[i], index: i});
+    }
+    predictionList = predictionList.sort((a, b) => {
+      return b.value - a.value;
+    }).slice(0, topK);
+
+    return predictionList.map(x => {
+      return {label: CLASSES[x.index], value: x.value};
+    });
+  }
+
+  const predict = async (model, videoRef) => {
     const result = tf.tidy(() => {
-      const pixels = tf.browser.fromPixels(video);
+      const pixels = tf.browser.fromPixels(videoRef.current);
       const centerHeight = pixels.shape[0] / 2;
       const beginHeight = centerHeight - VIDEO_HEIGHT_PIXELS / 2;
       const centerWidth = pixels.shape[1] / 2;
@@ -37,24 +54,28 @@ export default function Home() {
       return model.execute(PixelsCrpExpSc);
     });
 
-    const probs = result.dataSync();
-    const label = tf.argMax(probs).dataSync();
-    setPrediction(CLASSES[label]);
-    result.dispose();
+    const topK = getTopKClasses(result, 1)
+    setPrediction(topK[0].label);
     requestAnimationFrameId = requestAnimationFrame(() =>
-      predict(model, video)
+      predict(model, videoRef)
     );
+  };
+
+  const startVdieo = async (video) => {
+    video.current.play();
   };
   const warmUpModel = async (model) => {
     model.predict(tf.zeros([1, VIDEO_HEIGHT_PIXELS, VIDEO_WIDTH_PIXELS, 3]));
   };
-
   const enablePrediction = async () => {
     await tf.ready();
+
     const video = await setupCamera(videoRef);
+    await startVdieo(videoRef);
     const model = await setupModel();
     await warmUpModel(model);
-    await predict(model, video);
+
+    await predict(model, videoRef);
   };
 
   useEffect(() => {
@@ -77,9 +98,11 @@ export default function Home() {
         <h1 className="title">Recycle Bot</h1>
         <p className="description">Classify waste.</p>
         <img src={`${base_url}/images/tfjs.png`} alt="tfjs" width={200} />
-        <p className="description">{prediction}</p>
+        <p className="description">
+          {prediction ? prediction : "loading model"}
+        </p>
         <div className="frame">
-          <video className="video" autoPlay playsInline muted ref={videoRef} />
+          <video className="video" playsInline muted ref={videoRef} />
         </div>
       </main>
 
@@ -122,22 +145,6 @@ export default function Home() {
           display: flex;
           justify-content: center;
           align-items: center;
-        }
-
-        a {
-          color: inherit;
-          text-decoration: none;
-        }
-
-        .title a {
-          color: #0070f3;
-          text-decoration: none;
-        }
-
-        .title a:hover,
-        .title a:focus,
-        .title a:active {
-          text-decoration: underline;
         }
 
         .title {
