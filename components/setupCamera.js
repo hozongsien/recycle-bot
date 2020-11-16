@@ -9,15 +9,15 @@ const setupCamera = async (videoRef) => {
     audio: false,
     video: {
       facingMode: "environment",
-      height: 512,
-      width: 384,
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
     },
   });
   videoRef.current.srcObject = stream;
 
   return new Promise((resolve) => {
     videoRef.current.onloadedmetadata = () => {
-      resolve(videoRef.current);
+      resolve();
     };
   });
 };

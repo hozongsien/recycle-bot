@@ -43,6 +43,7 @@ export default function Home() {
   const predict = async (model, videoRef) => {
     const result = tf.tidy(() => {
       const pixels = tf.browser.fromPixels(videoRef.current);
+
       const centerHeight = pixels.shape[0] / 2;
       const beginHeight = centerHeight - VIDEO_HEIGHT_PIXELS / 2;
       const centerWidth = pixels.shape[1] / 2;
@@ -64,7 +65,16 @@ export default function Home() {
     );
   };
 
-  const startVdieo = async (video) => {
+  const setupVideoDimensions = (videoRef) => {
+    const height = videoRef.current.height;
+    const width = videoRef.current.width;
+    const aspectRatio = width / height;
+
+    videoRef.current.width = VIDEO_WIDTH_PIXELS;
+    videoRef.current.height = VIDEO_HEIGHT_PIXELS;
+  };
+
+  const startVideo = (video) => {
     video.current.play();
   };
   const warmUpModel = async (model) => {
@@ -73,8 +83,9 @@ export default function Home() {
   const enablePrediction = async () => {
     await tf.ready();
 
-    const video = await setupCamera(videoRef);
-    await startVdieo(videoRef);
+    await setupCamera(videoRef);
+    // setupVideoDimensions(videoRef);
+    startVideo(videoRef);
     const model = await setupModel();
     await warmUpModel(model);
     setMod(model);
@@ -96,19 +107,16 @@ export default function Home() {
       <Head>
         <title>Recycle Bot</title>
         <link rel="icon" href={`${base_url}/favicon.ico`} />
+        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
       </Head>
 
       <main>
-        <h1 className="title">Recycle Bot</h1>
-        <p className="description">Classify waste.</p>
-        <img src={`${base_url}/images/tfjs.png`} alt="tfjs" width={200} />
-        <p>{mod ? "model loaded" : "model not loaded"}</p>
-        <p className="description">
+        <div className="title">Recycle Bot</div>
+        <div className="description">Classifies waste.</div>
+        <div className="description">
           {prediction ? prediction : "making prediction"}
-        </p>
-        <div className="frame">
-          <video className="video" playsInline muted ref={videoRef} />
         </div>
+        <video className="video" autoPlay playsInline muted ref={videoRef} />
       </main>
 
       <footer>
@@ -118,23 +126,25 @@ export default function Home() {
       <style jsx>{`
         .container {
           min-height: 100vh;
-          padding: 0 0.5rem;
+          padding: 0;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
         }
-        .frame {
-          border: solid;
+
+        .video {
+          width: 100%;
         }
 
         main {
-          padding: 5rem 0;
+          padding: 0;
           flex: 1;
           display: flex;
           flex-direction: column;
           justify-content: center;
           align-items: center;
+          width: 100%;
         }
 
         footer {
@@ -168,25 +178,8 @@ export default function Home() {
           font-size: 1.5rem;
         }
 
-        .grid {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-wrap: wrap;
-
-          max-width: 800px;
-          margin-top: 3rem;
-        }
-
         .logo {
           height: 1em;
-        }
-
-        @media (max-width: 600px) {
-          .grid {
-            width: 100%;
-            flex-direction: column;
-          }
         }
       `}</style>
 
