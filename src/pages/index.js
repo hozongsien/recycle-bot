@@ -48,10 +48,9 @@ export default function Home() {
 
   const enablePrediction = async () => {
     await tf.ready();
-    const model = await setupModel()
-    console.log(model)
-    await warmUpModel(model)
     const video = await setupCamera(videoRef)
+    const model = await setupModel()
+    await warmUpModel(model)
     await predict(model, video)
   };
 
