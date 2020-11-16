@@ -1,7 +1,6 @@
 import * as tf from "@tensorflow/tfjs";
 import Head from "next/head";
-import Image from "next/image";
-import React, { useRef, useState, useEffect, useContext } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import setupCamera from "../components/setupCamera";
 import setupModel from "../components/setupModel";
 
@@ -18,6 +17,7 @@ export default function Home() {
     4: "plastic",
     5: "trash",
   };
+  const base_url = process.env.BASE_URL;
   let requestAnimationFrameId = 0;
 
   const predict = async (model, video) => {
@@ -39,24 +39,26 @@ export default function Home() {
 
     const probs = result.dataSync();
     const label = tf.argMax(probs).dataSync();
-    setPrediction(CLASSES[label])
-    result.dispose()
-    requestAnimationFrameId = requestAnimationFrame(() => predict(model, video));
+    setPrediction(CLASSES[label]);
+    result.dispose();
+    requestAnimationFrameId = requestAnimationFrame(() =>
+      predict(model, video)
+    );
   };
   const warmUpModel = async (model) => {
-    model.predict(tf.zeros([1, VIDEO_HEIGHT_PIXELS, VIDEO_WIDTH_PIXELS, 3]))
-  }
+    model.predict(tf.zeros([1, VIDEO_HEIGHT_PIXELS, VIDEO_WIDTH_PIXELS, 3]));
+  };
 
   const enablePrediction = async () => {
     await tf.ready();
-    const video = await setupCamera(videoRef)
-    const model = await setupModel()
-    await warmUpModel(model)
-    await predict(model, video)
+    const video = await setupCamera(videoRef);
+    const model = await setupModel();
+    await warmUpModel(model);
+    await predict(model, video);
   };
 
   useEffect(() => {
-    console.log('mount')
+    console.log("mount");
     enablePrediction();
 
     return () => {
@@ -64,24 +66,18 @@ export default function Home() {
     };
   }, []);
 
-
   return (
     <div className="container">
       <Head>
         <title>Recycle Bot</title>
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href={`${base_url}/favicon.ico`} />
       </Head>
 
       <main>
         <h1 className="title">Recycle Bot</h1>
         <p className="description">Classify waste.</p>
+        <img src={`${base_url}/images/tfjs.png`} alt="tfjs" width={200} />
         <p className="description">{prediction}</p>
-        <img 
-          src='/images/tfjs.png'
-          alt='tfjs'
-          width={300}
-          height={300}
-        />
         <div className="frame">
           <video className="video" autoPlay playsInline muted ref={videoRef} />
         </div>

@@ -1,4 +1,9 @@
+const isProd = process.env.NODE_ENV === "production";
+
 module.exports = {
-  assetPrefix: "/recycle-bot/",
-  basePath: "/recycle-bot",
+  assetPrefix: isProd ? "/recycle-bot" : "",
+  basePath: isProd ? "/recycle-bot" : "",
+  env: {
+    BASE_URL: isProd ? "/recycle-bot" : "",
+  },
 };
