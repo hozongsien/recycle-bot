@@ -1,7 +1,7 @@
 import * as tf from "@tensorflow/tfjs";
 import Head from "next/head";
 import React, { useRef, useState, useEffect } from "react";
-import setupCamera from "../components/setupCamera";
+import { setupCamera, startVideo } from "../components/camera";
 import setupModel from "../components/setupModel";
 
 export default function Home() {
@@ -65,18 +65,6 @@ export default function Home() {
     );
   };
 
-  const setupVideoDimensions = (videoRef) => {
-    const height = videoRef.current.height;
-    const width = videoRef.current.width;
-    const aspectRatio = width / height;
-
-    videoRef.current.width = VIDEO_WIDTH_PIXELS;
-    videoRef.current.height = VIDEO_HEIGHT_PIXELS;
-  };
-
-  const startVideo = (video) => {
-    video.current.play();
-  };
   const warmUpModel = async (model) => {
     model.predict(tf.zeros([1, VIDEO_HEIGHT_PIXELS, VIDEO_WIDTH_PIXELS, 3]));
   };

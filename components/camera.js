@@ -22,4 +22,17 @@ const setupCamera = async (videoRef) => {
   });
 };
 
-export default setupCamera;
+const setupVideoDimensions = (videoRef) => {
+  const height = videoRef.current.height;
+  const width = videoRef.current.width;
+  const aspectRatio = width / height;
+
+  videoRef.current.width = VIDEO_WIDTH_PIXELS;
+  videoRef.current.height = VIDEO_HEIGHT_PIXELS;
+};
+
+const startVideo = (video) => {
+  video.current.play();
+};
+
+export { setupCamera, setupVideoDimensions, startVideo };
