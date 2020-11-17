@@ -1,49 +1,29 @@
 import * as tf from "@tensorflow/tfjs";
 import Head from "next/head";
 import React, { useRef, useState, useEffect } from "react";
-import { setupCamera, startVideo } from "../components/camera";
-import setupModel from "../components/setupModel";
+import {
+  setupCamera,
+  startVideo,
+  VIDEO_WIDTH_PIXELS,
+  VIDEO_HEIGHT_PIXELS,
+} from "../components/camera";
+import {
+  setupModel,
+  warmUpModel,
+  getPrediction,
+  getTopKClasses,
+} from "../components/setupModel";
 
 export default function Home() {
-  const VIDEO_HEIGHT_PIXELS = 512;
-  const VIDEO_WIDTH_PIXELS = 384;
-  const videoRef = useRef();
-  const [mod, setMod] = useState();
-  const [prediction, setPrediction] = useState();
-  const CLASSES = {
-    0: "cardboard",
-    1: "glass",
-    2: "metal",
-    3: "paper",
-    4: "plastic",
-    5: "trash",
-  };
   const base_url = process.env.BASE_URL;
+  const videoRef = useRef();
+  const [loadedModel, setModel] = useState();
+  const [prediction, setPrediction] = useState();
   let requestAnimationFrameId = 0;
-
-  const getTopKClasses = (predictions, topK) => {
-    const values = predictions.dataSync();
-    predictions.dispose();
-
-    let predictionList = [];
-    for (let i = 0; i < values.length; i++) {
-      predictionList.push({ value: values[i], index: i });
-    }
-    predictionList = predictionList
-      .sort((a, b) => {
-        return b.value - a.value;
-      })
-      .slice(0, topK);
-
-    return predictionList.map((x) => {
-      return { label: CLASSES[x.index], value: x.value };
-    });
-  };
 
   const predict = async (model, videoRef) => {
     const result = tf.tidy(() => {
       const pixels = tf.browser.fromPixels(videoRef.current);
-
       const centerHeight = pixels.shape[0] / 2;
       const beginHeight = centerHeight - VIDEO_HEIGHT_PIXELS / 2;
       const centerWidth = pixels.shape[1] / 2;
@@ -53,9 +33,7 @@ export default function Home() {
         [VIDEO_HEIGHT_PIXELS, VIDEO_WIDTH_PIXELS, 3]
       );
 
-      const pixelsCrpExp = pixelsCropped.expandDims(0);
-      const PixelsCrpExpSc = tf.cast(pixelsCrpExp, "float32");
-      return model.execute(PixelsCrpExpSc);
+      return getPrediction(model, pixelsCropped);
     });
 
     const topK = getTopKClasses(result, 1);
@@ -65,30 +43,29 @@ export default function Home() {
     );
   };
 
-  const warmUpModel = async (model) => {
-    model.predict(tf.zeros([1, VIDEO_HEIGHT_PIXELS, VIDEO_WIDTH_PIXELS, 3]));
+  const startPrediction = async () => {
+    await warmUpModel(loadedModel);
+    await predict(loadedModel, videoRef);
   };
-  const enablePrediction = async () => {
+
+  const loadAssets = async () => {
     await tf.ready();
-
     await setupCamera(videoRef);
-    // setupVideoDimensions(videoRef);
-    startVideo(videoRef);
     const model = await setupModel();
-    await warmUpModel(model);
-    setMod(model);
-
-    await predict(model, videoRef);
+    setModel(model);
   };
 
   useEffect(() => {
-    console.log("mount");
-    enablePrediction();
-
-    return () => {
-      console.log("unmount");
-    };
+    loadAssets();
   }, []);
+
+  useEffect(() => {
+    if (!loadedModel) {
+      return;
+    }
+
+    startPrediction();
+  }, [loadedModel]);
 
   return (
     <div className="container">

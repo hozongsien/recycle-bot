@@ -1,3 +1,8 @@
+const VIDEO_WIDTH_PIXELS = 384;
+const VIDEO_HEIGHT_PIXELS = 512;
+
+export { VIDEO_WIDTH_PIXELS, VIDEO_HEIGHT_PIXELS };
+
 const setupCamera = async (videoRef) => {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
@@ -31,8 +36,8 @@ const setupVideoDimensions = (videoRef) => {
   videoRef.current.height = VIDEO_HEIGHT_PIXELS;
 };
 
-const startVideo = (video) => {
-  video.current.play();
+const startVideo = (videoRef) => {
+  videoRef.current.play();
 };
 
 export { setupCamera, setupVideoDimensions, startVideo };
